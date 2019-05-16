@@ -1,13 +1,11 @@
 import React from 'react';
 import { Subscribe } from 'unstated';
-import App from './App';
-import MyProfile from './MyProfile';
+import NewsContainer from './News';
 
-export default [App.instance, MyProfile.instance];
+export default [NewsContainer,];
 
 export {
-    App,
-    MyProfile,
+    NewsContainer,
 };
 
 export function wrapContainer(Component,

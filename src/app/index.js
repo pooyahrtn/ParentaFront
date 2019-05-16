@@ -22,14 +22,14 @@ export default class Entry extends React.Component {
 
     render() {
         return (
-            // <Provider inject={containers}>
+            <Provider inject={containers}>
                 <Router
                     // onNavigationStateChange={onNavigationStateChange}
                     ref={(ref) => {
                         NavigationService.setContainer(ref);
                     }}
                 />
-            // </Provider>
+            </Provider>
 
         );
     }
