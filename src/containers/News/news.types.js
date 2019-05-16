@@ -8,4 +8,14 @@ export type News = {
     sender: String,
     key: String,
     timestamp: Date,
+    attachments?: {
+        title: String,
+        link: String,
+    }[],
+    buttons: {
+        text: String,
+        id: String,
+        background_color: String,
+        text_color: String,
+    }[],
 }
