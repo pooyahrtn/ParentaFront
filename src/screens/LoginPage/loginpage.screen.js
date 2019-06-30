@@ -97,7 +97,7 @@ export default class LoginPage extends Component {
                 style={styles.screen}
             >
                 <StatusBar
-                    backgroundColor={colors.statusbarColor}
+                    backgroundColor='green'
                 />
                 <Image
                     source={backgroundImage}

@@ -5,13 +5,14 @@ import {
     View, Platform,
     Linking, FlatList,
     Dimensions, TouchableOpacity,
-    Image, ScrollView
+    Image, ScrollView, ActivityIndicator
 } from 'react-native';
 import { Text } from '../components';
 import ParsedText from 'react-native-parsed-text';
 import { News } from '../containers/News/news.types';
 import { shadow } from '../theme';
 import moment from 'moment-jalaali';
+import { api } from '../app';
 moment.loadPersian({
     usePersianDigits: true,
     dialect: 'persian-modern',
@@ -19,6 +20,9 @@ moment.loadPersian({
 
 export default class NewsDetailScreen extends React.Component {
     item: News;
+    state = {
+        refreshing: true,
+    }
     constructor(props) {
         super(props);
         const item = this.props.navigation.getParam('item');
@@ -34,20 +38,41 @@ export default class NewsDetailScreen extends React.Component {
     }
 
     onAttachmentPressed = (item) => {
-        Linking.openURL(item.link);
+        Linking.openURL(item.file);
+    }
+
+    componentDidMount() {
+        getNewsDetail(this.item.uuid).then(res => {
+            if (res.ok) {
+                this.item = { ...this.item, ...res.data };
+            }
+            this.setState({
+                refreshing: false
+            });
+        }).catch(error => {
+            this.setState({
+                refreshing: false
+            })
+        })
     }
 
     render() {
 
         const {
-            sender,
+            feeder,
             title,
-            timestamp,
-            description,
-            attachments,
+            date_created,
+            body,
+            feed_attachments,
             buttons
         } = this.item;
-        const date = moment(timestamp);
+        // this.item.buttons = [
+
+        //     { text: 'تایید', id: '0', text_color: 'white', background_color: 'blue' },
+        //     { text: 'مخالفت', id: '1', text_color: 'white', background_color: 'red' },
+
+        // ]
+        const date = moment(date_created);
 
         return (
             <View style={styles.screen}>
@@ -55,30 +80,39 @@ export default class NewsDetailScreen extends React.Component {
                 <ScrollView style={{ flex: 1 }}>
                     <>
                         <View style={{ flexDirection: 'row-reverse', justifyContent: 'space-between' }}>
-                            <Text style={styles.senderText}>{sender}</Text>
+                            <Text style={styles.senderText}>{feeder.name}</Text>
                             <Text style={styles.timeText}>{date.format('jD jMMMM')}</Text>
                         </View>
                         <Text style={styles.titleText}>{title}</Text>
-                        <ParsedText
-                            style={styles.bodyText}
-                            parse={
-                                [
-                                    { type: 'url', style: styles.url, onPress: this.handleUrlPress },
-                                    { type: 'phone', style: styles.phone, onPress: this.handlePhonePress },
-                                ]
-                            }
-                        >
-                            {description}
-                        </ParsedText>
-                        {(attachments) && (
-                            <FlatList
-                                data={attachments}
-                                horizontal
-                                keyExtractor={(_, index) => String(index)}
-                                renderItem={({ item }) => <Attachment item={item} onPress={this.onAttachmentPressed} />}
-                            />
-                        )}
+                        {
+                            this.state.refreshing ?
+                                <ActivityIndicator />
+                                :
+                                (
+
+                                    <ParsedText
+                                        style={styles.bodyText}
+                                        parse={
+                                            [
+                                                { type: 'url', style: styles.url, onPress: this.handleUrlPress },
+                                                { type: 'phone', style: styles.phone, onPress: this.handlePhonePress },
+                                            ]
+                                        }
+                                    >
+                                        {body}
+                                    </ParsedText>
+
+                                )
+                        }
                     </>
+                    {(feed_attachments) && (
+                        <FlatList
+                            data={feed_attachments}
+                            horizontal
+                            keyExtractor={item => item.uuid}
+                            renderItem={({ item }) => <Attachment item={item} onPress={this.onAttachmentPressed} />}
+                        />
+                    )}
                 </ScrollView>
 
                 {buttons && buttons.length > 0 && (
@@ -105,23 +139,23 @@ export default class NewsDetailScreen extends React.Component {
 type AttachmentType = {
     item: {
         title: String,
-        link: String,
+        file: String,
     },
     onPress: (item: Object) => void
 }
 function Attachment(props: AttachmentType) {
-    const { item: { title, link }, onPress } = props;
+    const { item: { title, file }, onPress } = props;
     // item: https://esossl-a.akamaihd.net/s-final-defender_wallpaper-1920x1080.jpg
-    const isImage = /(.+)\.(jpg|jpeg|png)/.test(link);
+    const isImage = /(.+)\.(jpg|jpeg|png)/.test(file);
     return (
         <TouchableOpacity
             style={styles.attachmentCard}
-            onPress={() => onPress({ link })}
+            onPress={() => onPress({ file })}
         >
             {isImage && (
                 <Image
                     style={styles.image}
-                    source={{ uri: link }}
+                    source={{ uri: file }}
                 />
             )}
             <View style={styles.overlay}>
@@ -131,7 +165,7 @@ function Attachment(props: AttachmentType) {
                     fontSize: 16,
                 }}
                     ellipsizeMode="tail"
-                >{title}</Text>
+                >ضمیمه</Text>
             </View>
 
         </TouchableOpacity>
@@ -206,4 +240,13 @@ const styles = StyleSheet.create({
         ...shadow,
         elevation: 1,
     }
-}); 
+});
+
+async function getNewsDetail(uuid: String) {
+    const res = await api.get(`feeds/get/${uuid}/`);
+    const { ok, data } = res;
+    return {
+        ok,
+        data
+    }
+}

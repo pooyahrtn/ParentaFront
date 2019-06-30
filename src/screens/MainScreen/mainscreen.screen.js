@@ -9,6 +9,7 @@ import { Text } from '../../components';
 import { shadow, colors } from '../../theme';
 import moment from 'moment-jalaali';
 import NewsContainer from '../../containers/News/news.container';
+import { News } from '../../containers/News/news.types'
 import { wrapContainer } from '../../containers';
 moment.loadPersian({
     usePersianDigits: true,
@@ -27,6 +28,11 @@ class MainScreen extends Component<Props> {
         this.props.navigation.navigate('NewsDetailsScreen', { item });
     }
 
+    componentDidMount() {
+        const { newsContainer: { refreshNews } } = this.props;
+        refreshNews();
+    }
+
     render() {
         const { newsContainer: { state: { news } } } = this.props;
         return (
@@ -37,6 +43,7 @@ class MainScreen extends Component<Props> {
                 />
                 <FlatList
                     data={news}
+                    keyExtractor={(item) => item.uuid}
                     renderItem={({ item }) => {
                         return (
                             <Card
@@ -63,8 +70,9 @@ type CardProps = {
 }
 function Card(props: CardProps) {
     const { item, onPress } = props;
-    const { sender, description, title, timestamp } = item;
-    const date = moment(timestamp);
+    const { feeder, title, date_created } = item;
+
+    const date = moment(date_created);
     return (
         <TouchableOpacity
             style={styles.card}
@@ -72,13 +80,13 @@ function Card(props: CardProps) {
         >
             <View style={[styles.spaceStyle, { flexDirection: 'row', justifyContent: 'space-between' }]}>
                 <Text style={styles.timeText}>{date.format('jD jMMMM')}</Text>
-                <Text style={{ fontSize: 12 }}>{sender}</Text>
+                <Text style={{ fontSize: 12 }}>{feeder.name}</Text>
             </View>
 
             <View style={styles.spaceStyle}>
                 <Text style={styles.titleText}>{title}</Text>
             </View>
-            <View style={styles.spaceStyle}>
+            {/* <View style={styles.spaceStyle}>
                 <Text
                     ellipsizeMode="tail"
                     numberOfLines={1}
@@ -86,7 +94,7 @@ function Card(props: CardProps) {
                 >
                     {description}
                 </Text>
-            </View>
+            </View> */}
 
         </TouchableOpacity>
     )

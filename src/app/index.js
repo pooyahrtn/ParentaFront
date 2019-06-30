@@ -37,7 +37,7 @@ export default class Entry extends React.Component {
 
 export { default as config } from './config';
 
-export const baseUrl = 'https://getonyva.com';
+export const baseUrl = 'http://46.101.240.34/api/v1/';
 
 
 export const api = new AxiosProvider({
